@@ -30,29 +30,7 @@ export const useAuth = () => {
   return context;
 };
 
-// Mock user data for testing
-const mockUsers = [
-  {
-    id: '1',
-    firstName: 'Admin',
-    lastName: 'User',
-    email: 'admin@test.com',
-    mobileNumber: '+1234567890',
-    customerCode: 'ADM001',
-    role: 'admin' as const,
-    password: 'admin123'
-  },
-  {
-    id: '2',
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'user@test.com',
-    mobileNumber: '+1234567891',
-    customerCode: 'USR001',
-    role: 'user' as const,
-    password: 'user123'
-  }
-];
+// Removed mockUsers and all related mock login logic
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -69,26 +47,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Mock authentication - simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const foundUser = mockUsers.find(u => u.email === email && u.password === password);
-    
-    if (!foundUser) {
+    const response = await fetch('http://localhost:5000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    if (!response.ok) {
       throw new Error('Invalid email or password');
     }
-
-    // Create mock JWT token
-    const mockToken = `mock-jwt-token-${foundUser.id}-${Date.now()}`;
-    
-    // Remove password from user object before storing
-    const { password: _, ...userWithoutPassword } = foundUser;
-    
-    setToken(mockToken);
-    setUser(userWithoutPassword);
-    
-    localStorage.setItem('token', mockToken);
-    localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+    const data = await response.json();
+    // Map backend response to User interface
+    const userFromApi: User = {
+      id: data.id.toString(),
+      firstName: data.first_name,
+      lastName: data.last_name,
+      email: data.email_id,
+      mobileNumber: data.phone_number || '',
+      customerCode: data.client_code || '',
+      role: data.role === 'admin' ? 'admin' : 'user',
+    };
+    // For now, use a mock token
+    const token = `mock-jwt-token-${userFromApi.id}-${Date.now()}`;
+    setToken(token);
+    setUser(userFromApi);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userFromApi));
   };
 
   const logout = () => {
