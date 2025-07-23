@@ -56,7 +56,7 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch('http://localhost:5555/api/admin/users', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -75,7 +75,7 @@ const UserManagement = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch('http://localhost:5555/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,14 +124,14 @@ const UserManagement = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add New User
+              Add Client
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
+              <DialogTitle>Add Client</DialogTitle>
               <DialogDescription>
-                Create a new user account with the required details.
+                Create a new client account with the required details.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddUser} className="space-y-4">

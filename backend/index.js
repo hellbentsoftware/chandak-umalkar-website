@@ -143,7 +143,16 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =>
     const [rows] = await db.execute(
       'SELECT id, first_name, last_name, email_id, role, client_code, phone_number FROM user'
     );
-    res.json(rows);
+    const users = rows.map(user => ({
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      email: user.email_id,
+      mobileNumber: user.phone_number,
+      customerCode: user.client_code,
+      role: user.role
+    }));
+    res.json(users);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

@@ -190,7 +190,10 @@ const AdminDashboard = () => {
                   <CardDescription>Common administrative tasks</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <button className="w-full p-3 text-left bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors">
+                  <button
+                    className="w-full p-3 text-left bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors"
+                    onClick={() => setActiveTab('users')}
+                  >
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4 text-primary" />
                       <span className="text-sm font-medium">Manage Users</span>
