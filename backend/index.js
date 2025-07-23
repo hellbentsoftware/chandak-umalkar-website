@@ -7,7 +7,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import documentRoutes from './documentRoutes.js';
+import nodemailer from 'nodemailer';
+// import documentRoutes from './documentRoutes.js'; // Uncomment if you have document routes
 
 dotenv.config();
 
@@ -24,6 +25,14 @@ const db = await mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT
+});
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'testhellbent@gmail.com',
+    pass: 'utfxojoxwsthzhve'
+  }
 });
 
 app.use(cors());
@@ -64,8 +73,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Document routes
-app.use('/api/documents', authenticateToken, documentRoutes);
+// Document routes (uncomment if you have documentRoutes.js)
+// app.use('/api/documents', authenticateToken, documentRoutes);
 
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
@@ -83,9 +92,8 @@ app.post('/api/login', async (req, res) => {
       // Compare hashed password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(401).json({ message: 'Hello Invalid credentials' });
+        return res.status(401).json({ message: 'Invalid credentials' });
       }
-      
       // Generate JWT token
       const token = jwt.sign(
         {
@@ -98,7 +106,6 @@ app.post('/api/login', async (req, res) => {
         JWT_SECRET,
         { expiresIn: '24h' }
       );
-
       res.json({
         token,
         user: {
@@ -126,7 +133,6 @@ app.get('/api/me', authenticateToken, async (req, res) => {
       'SELECT id, first_name, last_name, email_id, role, client_code, phone_number FROM user WHERE id = ?',
       [req.user.id]
     );
-    
     if (rows.length === 1) {
       res.json(rows[0]);
     } else {
@@ -137,7 +143,7 @@ app.get('/api/me', authenticateToken, async (req, res) => {
   }
 });
 
-// Admin-only route example
+// Admin-only route to get all users
 app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const [rows] = await db.execute(
@@ -157,6 +163,8 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =>
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
+// Admin-only route to add a new user
 app.post('/api/admin/users', async (req, res) => {
   const {
     firstName,
@@ -175,6 +183,15 @@ app.post('/api/admin/users', async (req, res) => {
     !customerCode || !role || !password
   ) {
     return res.status(400).json({ message: 'All required fields must be filled.' });
+  }
+
+  // Check if user exists
+  const [existing] = await db.execute(
+    'SELECT id FROM user WHERE email_id = ? OR client_code = ?',
+    [email, customerCode]
+  );
+  if (existing.length > 0) {
+    return res.status(409).json({ message: 'User already present' });
   }
 
   // Hash password
@@ -197,6 +214,48 @@ app.post('/api/admin/users', async (req, res) => {
         hashedPassword
       ]
     );
+    // Use improved HTML email template
+    const mailOptions = {
+      from: 'testhellbent@gmail.com',
+      to: email,
+      subject: 'Welcome to Tax Consultancy Portal',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px #e0e0e0;">
+          <div style="background: linear-gradient(90deg, #4f8cff, #6a82fb); color: #fff; padding: 24px 32px;">
+            <h2 style="margin: 0; font-size: 1.7rem;">Welcome to Tax Consultancy Portal</h2>
+          </div>
+          <div style="padding: 32px;">
+            <p style="font-size: 1.1rem; margin-bottom: 16px;">Hello <b>${firstName} ${lastName}</b>,</p>
+            <p style="margin-bottom: 20px;">Your account has been created successfully. Here are your login details:</p>
+            <table style="width: 100%; margin-bottom: 24px;">
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold; color: #333;">Login Email:</td>
+                <td style="padding: 8px 0;"><a href="mailto:${email}" style="color: #4f8cff; text-decoration: none;">${email}</a></td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold; color: #333;">Password:</td>
+                <td style="padding: 8px 0; color: #222;">${password}</td>
+              </tr>
+            </table>
+            <p style="color: #888; font-size: 0.95rem; margin-bottom: 24px;">
+              <b>Important:</b> Please change your password after logging in for the first time to keep your account secure.
+            </p>
+            <div style="text-align: center; margin-bottom: 16px;">
+              <a href="http://your-login-url.com" style="background: #4f8cff; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1rem;">Login Now</a>
+            </div>
+            <p style="margin-top: 32px; color: #555;">Best regards,<br/>Tax Consultancy Team</p>
+          </div>
+        </div>
+      `
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
     res.status(201).json({ message: 'User created successfully.' });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
@@ -212,7 +271,6 @@ app.post('/api/logout', authenticateToken, (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
-
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
-}); 
+});

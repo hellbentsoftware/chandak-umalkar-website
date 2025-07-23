@@ -54,6 +54,8 @@ const AddClient = () => {
       });
       if (response.ok) {
         navigate('/admin'); // Redirect to admin dashboard or user management
+      } else if (response.status === 409) {
+        alert('User already present');
       } else {
         alert('Failed to add user');
       }
