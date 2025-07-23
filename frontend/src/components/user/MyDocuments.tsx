@@ -51,7 +51,7 @@ const MyDocuments = () => {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch('/api/documents/my-documents', {
+      const response = await fetch('http://localhost:5555/api/documents/my-documents', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -100,7 +100,7 @@ const MyDocuments = () => {
     }
 
     try {
-      const response = await fetch(`/api/documents/${documentId}`, {
+      const response = await fetch(`http://localhost:5555/api/documents/${documentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

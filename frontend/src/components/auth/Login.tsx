@@ -60,33 +60,7 @@ const Login = () => {
           <CardDescription>Sign in to access your dashboard</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Demo Credentials */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h3 className="text-sm font-medium text-blue-900 mb-3">Demo Credentials</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
-                onClick={() => fillDemoCredentials('admin')}
-                className="text-xs"
-              >
-                <User className="h-3 w-3 mr-1" />
-                Admin Login
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
-                onClick={() => fillDemoCredentials('user')}
-                className="text-xs"
-              >
-                <Lock className="h-3 w-3 mr-1" />
-                User Login
-              </Button>
-            </div>
-          </div>
-
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>

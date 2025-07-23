@@ -79,7 +79,7 @@ const DocumentUpload = () => {
       formData.append('documentType', documentType);
       formData.append('year', year);
 
-      const response = await fetch('/api/documents/upload', {
+      const response = await fetch('http://localhost:5555/api/documents/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
