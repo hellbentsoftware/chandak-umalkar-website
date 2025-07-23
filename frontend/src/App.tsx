@@ -9,6 +9,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import Login from "./components/auth/Login";
 import NotFound from "./pages/NotFound";
+import AddClient from './pages/AddClient';
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,14 @@ const AppContent = () => {
         element={
           <ProtectedRoute>
             <UserDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/add-client" 
+        element={
+          <ProtectedRoute adminOnly>
+            <AddClient />
           </ProtectedRoute>
         } 
       />

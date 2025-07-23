@@ -157,6 +157,55 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =>
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+app.post('/api/admin/users', async (req, res) => {
+  const {
+    firstName,
+    lastName,
+    email,
+    mobileNumber,
+    customerCode,
+    aadharNumber,
+    panNumber,
+    role,
+    password
+  } = req.body;
+
+  if (
+    !firstName || !lastName || !email || !mobileNumber ||
+    !customerCode || !role || !password
+  ) {
+    return res.status(400).json({ message: 'All required fields must be filled.' });
+  }
+
+  // Hash password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  try {
+    await db.execute(
+      `INSERT INTO user
+        (first_name, last_name, email_id, phone_number, client_code, aadhar_number, pan_number, role, password)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        firstName,
+        lastName,
+        email,
+        mobileNumber,
+        customerCode,
+        aadharNumber || null,
+        panNumber || null,
+        role,
+        hashedPassword
+      ]
+    );
+    res.status(201).json({ message: 'User created successfully.' });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      res.status(409).json({ message: 'Email or client code already exists.' });
+    } else {
+      res.status(500).json({ message: 'Server error', error: err.message });
+    }
+  }
+});
 
 // Logout route (client-side token removal)
 app.post('/api/logout', authenticateToken, (req, res) => {
