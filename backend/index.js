@@ -185,10 +185,15 @@ app.post('/api/admin/users', async (req, res) => {
     return res.status(400).json({ message: 'All required fields must be filled.' });
   }
 
-  // Check if user exists
+  // Check if user exists by email, aadhar number, pan number, client code, or phone number
   const [existing] = await db.execute(
-    'SELECT id FROM user WHERE email_id = ? OR client_code = ?',
-    [email, customerCode]
+    `SELECT id FROM user WHERE 
+      email_id = ? OR 
+      aadhar_number = ? OR 
+      pan_number = ? OR 
+      client_code = ? OR 
+      phone_number = ?`,
+    [email, aadharNumber, panNumber, customerCode, mobileNumber]
   );
   if (existing.length > 0) {
     return res.status(409).json({ message: 'User already present' });
