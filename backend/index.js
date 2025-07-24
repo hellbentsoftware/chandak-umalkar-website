@@ -232,7 +232,7 @@ app.post('/api/admin/users', async (req, res) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px #e0e0e0;">
           <div style="background: linear-gradient(90deg, #4f8cff, #6a82fb); color: #fff; padding: 24px 32px;">
-            <h2 style="margin: 0; font-size: 1.7rem;">Welcome to Tax Consultancy Portal</h2>
+            <h2 style="margin: 0; font-size: 1.7rem;">Welcome to Chandak Umalkar Associates</h2>
           </div>
           <div style="padding: 32px;">
             <p style="font-size: 1.1rem; margin-bottom: 16px;">Hello <b>${firstName} ${lastName}</b>,</p>
@@ -251,7 +251,7 @@ app.post('/api/admin/users', async (req, res) => {
               <b>Important:</b> Please change your password after logging in for the first time to keep your account secure.
             </p>
             <div style="text-align: center; margin-bottom: 16px;">
-              <a href="http://your-login-url.com" style="background: #4f8cff; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1rem;">Login Now</a>
+              <a href="https://chandakumalkar.hellbent.in/login" style="background: #4f8cff; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1rem;">Login Now</a>
             </div>
             <p style="margin-top: 32px; color: #555;">Best regards,<br/>Chandak Umalkar Associates</p>
           </div>
