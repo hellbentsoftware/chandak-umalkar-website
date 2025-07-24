@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import API_BASE_URL from "../../config";
 import {
   Table,
   TableBody,
@@ -51,7 +52,7 @@ const MyDocuments = () => {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch('http://localhost:5555/api/documents/my-documents', {
+      const response = await fetch(`${API_BASE_URL}/api/documents/my-documents`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -100,7 +101,7 @@ const MyDocuments = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5555/api/documents/${documentId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

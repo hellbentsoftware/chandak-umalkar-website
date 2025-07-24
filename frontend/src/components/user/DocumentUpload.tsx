@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Upload, FileText } from 'lucide-react';
-
+import API_BASE_URL from "../../config";
 const DocumentUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState('');
@@ -79,7 +79,7 @@ const DocumentUpload = () => {
       formData.append('documentType', documentType);
       formData.append('year', year);
 
-      const response = await fetch('http://localhost:5555/api/documents/upload', {
+      const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

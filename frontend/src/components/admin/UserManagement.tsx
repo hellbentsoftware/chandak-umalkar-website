@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -18,13 +24,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/context/AuthContext';
-import { Plus, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { Plus, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../../config";
 interface User {
   id: string;
   firstName: string;
@@ -32,7 +38,7 @@ interface User {
   email: string;
   mobileNumber: string;
   customerCode: string;
-  role: 'admin' | 'user';
+  role: "admin" | "user";
 }
 
 const UserManagement = () => {
@@ -44,15 +50,15 @@ const UserManagement = () => {
   const navigate = useNavigate();
 
   const [newUser, setNewUser] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    mobileNumber: '',
-    customerCode: '',
-    aadharNumber: '',
-    panNumber: '',
-    role: 'client',
-    password: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobileNumber: "",
+    customerCode: "",
+    aadharNumber: "",
+    panNumber: "",
+    role: "client",
+    password: "",
   });
 
   useEffect(() => {
@@ -61,9 +67,9 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5555/api/admin/users', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       if (response.ok) {
@@ -71,7 +77,7 @@ const UserManagement = () => {
         setUsers(data);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     }
   };
 
@@ -80,11 +86,11 @@ const UserManagement = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5555/api/admin/users', {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(newUser),
       });
@@ -95,20 +101,20 @@ const UserManagement = () => {
           description: "User added successfully.",
         });
         setNewUser({
-          firstName: '',
-          lastName: '',
-          email: '',
-          mobileNumber: '',
-          customerCode: '',
-          aadharNumber: '',
-          panNumber: '',
-          role: 'client',
-          password: '',
+          firstName: "",
+          lastName: "",
+          email: "",
+          mobileNumber: "",
+          customerCode: "",
+          aadharNumber: "",
+          panNumber: "",
+          role: "client",
+          password: "",
         });
         setIsDialogOpen(false);
         fetchUsers();
       } else {
-        throw new Error('Failed to add user');
+        throw new Error("Failed to add user");
       }
     } catch (error) {
       toast({
@@ -128,7 +134,7 @@ const UserManagement = () => {
           <h2 className="text-2xl font-bold">User Management</h2>
           <p className="text-muted-foreground">Manage all registered users</p>
         </div>
-        <Button onClick={() => navigate('/admin/add-client')}>
+        <Button onClick={() => navigate("/admin/add-client")}>
           <Plus className="h-4 w-4 mr-2" />
           Add Client
         </Button>
@@ -140,9 +146,7 @@ const UserManagement = () => {
             <Users className="h-5 w-5" />
             Registered Users
           </CardTitle>
-          <CardDescription>
-            Total users: {users.length}
-          </CardDescription>
+          <CardDescription>Total users: {users.length}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -165,7 +169,9 @@ const UserManagement = () => {
                   <TableCell>{user.mobileNumber}</TableCell>
                   <TableCell>{user.customerCode}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                    <Badge
+                      variant={user.role === "admin" ? "default" : "secondary"}
+                    >
                       {user.role}
                     </Badge>
                   </TableCell>

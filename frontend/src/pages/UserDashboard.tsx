@@ -1,13 +1,29 @@
-
-import React from 'react';
-import Header from '@/components/layout/Header';
-import DocumentUpload from '@/components/user/DocumentUpload';
-import MyDocuments from '@/components/user/MyDocuments';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Upload, Calendar, CheckCircle, AlertCircle, Clock, TrendingUp, Target, Award, Star } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-
+import React from "react";
+import Header from "@/components/layout/Header";
+import DocumentUpload from "@/components/user/DocumentUpload";
+import MyDocuments from "@/components/user/MyDocuments";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  FileText,
+  Upload,
+  Calendar,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  TrendingUp,
+  Target,
+  Award,
+  Star,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import API_BASE_URL from "../config";
 const UserDashboard = () => {
   const { token } = useAuth();
   const [stats, setStats] = React.useState({
@@ -19,19 +35,19 @@ const UserDashboard = () => {
   React.useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:5555/api/user/stats', {
+        const response = await fetch(`${API_BASE_URL}/api/user/stats`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         if (response.ok) {
           const data = await response.json();
           setStats({ ...data, loading: false });
         } else {
-          throw new Error('Failed to fetch stats');
+          throw new Error("Failed to fetch stats");
         }
       } catch (error) {
-        setStats(s => ({ ...s, loading: false }));
+        setStats((s) => ({ ...s, loading: false }));
       }
     };
     if (token) fetchStats();
@@ -40,11 +56,13 @@ const UserDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/20">
       <Header />
-      
+
       <div className="container mx-auto px-6 py-8">
         {/* Enhanced Header */}
         <div className="mb-8 animate-fade-up">
-          <h1 className="text-4xl font-bold mb-3 gradient-text">Welcome back!</h1>
+          <h1 className="text-4xl font-bold mb-3 gradient-text">
+            Welcome back!
+          </h1>
           <p className="text-lg text-muted-foreground">
             Streamline your taxation document management with ease
           </p>
@@ -54,27 +72,33 @@ const UserDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-fade-up">
           <Card className="stat-card group hover:scale-105 transition-transform duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Documents Uploaded</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Documents Uploaded
+              </CardTitle>
               <div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
                 <FileText className="h-5 w-5 text-blue-600" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground mb-1">{stats.loading ? '...' : stats.documentsUploaded}</div>
-              <p className="text-sm text-muted-foreground">
-                Across all years
-              </p>
+              <div className="text-3xl font-bold text-foreground mb-1">
+                {stats.loading ? "..." : stats.documentsUploaded}
+              </div>
+              <p className="text-sm text-muted-foreground">Across all years</p>
             </CardContent>
           </Card>
           <Card className="stat-card group hover:scale-105 transition-transform duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">This Month</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                This Month
+              </CardTitle>
               <div className="p-2 bg-green-500/10 rounded-lg group-hover:bg-green-500/20 transition-colors">
                 <Upload className="h-5 w-5 text-green-600" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground mb-1">{stats.loading ? '...' : stats.newUploadsThisMonth}</div>
+              <div className="text-3xl font-bold text-foreground mb-1">
+                {stats.loading ? "..." : stats.newUploadsThisMonth}
+              </div>
               <p className="text-sm text-muted-foreground">
                 New uploads this month
               </p>
@@ -145,20 +169,26 @@ const UserDashboard = () => {
         {/* Enhanced Tabs */}
         <Tabs defaultValue="upload" className="space-y-6 animate-fade-up">
           <TabsList className="glass-effect grid w-full grid-cols-2 p-2 h-14">
-            <TabsTrigger value="upload" className="flex items-center space-x-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger
+              value="upload"
+              className="flex items-center space-x-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
               <Upload className="h-4 w-4" />
               <span className="font-medium">Upload Documents</span>
             </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center space-x-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger
+              value="documents"
+              className="flex items-center space-x-2 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
               <FileText className="h-4 w-4" />
               <span className="font-medium">My Documents</span>
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="upload" className="animate-scale-in">
             <DocumentUpload />
           </TabsContent>
-          
+
           <TabsContent value="documents" className="animate-scale-in">
             <MyDocuments />
           </TabsContent>

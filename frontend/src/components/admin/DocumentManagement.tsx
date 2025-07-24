@@ -26,6 +26,7 @@ interface Document {
   userEmail: string;
   fileUrl: string;
 }
+import API_BASE_URL from "../../config";
 
 const DocumentManagement = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -53,7 +54,7 @@ const DocumentManagement = () => {
   const fetchDocuments = async () => {
     console.log('Admin documents fetch token:', token); // Debug log
     try {
-      const response = await fetch('http://localhost:5555/api/admin/documents', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/documents`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

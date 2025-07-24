@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/context/AuthContext';
-import Header from '@/components/layout/Header';
-
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/context/AuthContext";
+import Header from "@/components/layout/Header";
+import API_BASE_URL from "../config";
 const AddClient = () => {
   const [newUser, setNewUser] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    mobileNumber: '',
-    customerCode: '',
-    aadharNumber: '',
-    panNumber: '',
-    role: 'client',
-    password: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobileNumber: "",
+    customerCode: "",
+    aadharNumber: "",
+    panNumber: "",
+    role: "client",
+    password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useAuth();
@@ -26,15 +26,19 @@ const AddClient = () => {
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!newUser.firstName) newErrors.firstName = 'First name is required';
-    if (!newUser.lastName) newErrors.lastName = 'Last name is required';
-    if (!newUser.email) newErrors.email = 'Email is required';
-    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(newUser.email)) newErrors.email = 'Invalid email format';
-    if (!newUser.mobileNumber) newErrors.mobileNumber = 'Phone number is required';
-    if (!newUser.customerCode) newErrors.customerCode = 'Client code is required';
-    if (!newUser.role) newErrors.role = 'Role is required';
-    if (!newUser.password) newErrors.password = 'Password is required';
-    else if (newUser.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    if (!newUser.firstName) newErrors.firstName = "First name is required";
+    if (!newUser.lastName) newErrors.lastName = "Last name is required";
+    if (!newUser.email) newErrors.email = "Email is required";
+    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(newUser.email))
+      newErrors.email = "Invalid email format";
+    if (!newUser.mobileNumber)
+      newErrors.mobileNumber = "Phone number is required";
+    if (!newUser.customerCode)
+      newErrors.customerCode = "Client code is required";
+    if (!newUser.role) newErrors.role = "Role is required";
+    if (!newUser.password) newErrors.password = "Password is required";
+    else if (newUser.password.length < 8)
+      newErrors.password = "Password must be at least 8 characters";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -44,23 +48,23 @@ const AddClient = () => {
     if (!validate()) return;
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:5555/api/admin/users', {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(newUser),
       });
       if (response.ok) {
-        navigate('/admin'); // Redirect to admin dashboard or user management
+        navigate("/admin"); // Redirect to admin dashboard or user management
       } else if (response.status === 409) {
-        alert('User already present');
+        alert("User already present");
       } else {
-        alert('Failed to add user');
+        alert("Failed to add user");
       }
     } catch (error) {
-      alert('Failed to add user');
+      alert("Failed to add user");
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +76,9 @@ const AddClient = () => {
       <div className="flex items-center justify-center py-12">
         <Card className="w-full max-w-2xl shadow-lg border border-gray-200">
           <CardHeader>
-            <CardTitle className="text-3xl font-bold text-center">Add Client</CardTitle>
+            <CardTitle className="text-3xl font-bold text-center">
+              Add Client
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAddUser} className="space-y-6">
@@ -82,20 +88,32 @@ const AddClient = () => {
                   <Input
                     id="firstName"
                     value={newUser.firstName}
-                    onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, firstName: e.target.value })
+                    }
                     required
                   />
-                  {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
+                  {errors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.firstName}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
                     id="lastName"
                     value={newUser.lastName}
-                    onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, lastName: e.target.value })
+                    }
                     required
                   />
-                  {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
+                  {errors.lastName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.lastName}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -103,37 +121,55 @@ const AddClient = () => {
                     id="email"
                     type="email"
                     value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, email: e.target.value })
+                    }
                     required
                   />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="mobileNumber">Phone Number</Label>
                   <Input
                     id="mobileNumber"
                     value={newUser.mobileNumber}
-                    onChange={(e) => setNewUser({ ...newUser, mobileNumber: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, mobileNumber: e.target.value })
+                    }
                     required
                   />
-                  {errors.mobileNumber && <p className="text-red-500 text-xs mt-1">{errors.mobileNumber}</p>}
+                  {errors.mobileNumber && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.mobileNumber}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="customerCode">Client Code</Label>
                   <Input
                     id="customerCode"
                     value={newUser.customerCode}
-                    onChange={(e) => setNewUser({ ...newUser, customerCode: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, customerCode: e.target.value })
+                    }
                     required
                   />
-                  {errors.customerCode && <p className="text-red-500 text-xs mt-1">{errors.customerCode}</p>}
+                  {errors.customerCode && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.customerCode}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="aadharNumber">Aadhar Number</Label>
                   <Input
                     id="aadharNumber"
                     value={newUser.aadharNumber}
-                    onChange={(e) => setNewUser({ ...newUser, aadharNumber: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, aadharNumber: e.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -141,7 +177,9 @@ const AddClient = () => {
                   <Input
                     id="panNumber"
                     value={newUser.panNumber}
-                    onChange={(e) => setNewUser({ ...newUser, panNumber: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, panNumber: e.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -149,10 +187,14 @@ const AddClient = () => {
                   <Input
                     id="role"
                     value={newUser.role}
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, role: e.target.value })
+                    }
                     required
                   />
-                  {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
+                  {errors.role && (
+                    <p className="text-red-500 text-xs mt-1">{errors.role}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
@@ -160,14 +202,25 @@ const AddClient = () => {
                     id="password"
                     type="password"
                     value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, password: e.target.value })
+                    }
                     required
                   />
-                  {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                  {errors.password && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.password}
+                    </p>
+                  )}
                 </div>
               </div>
-              <Button type="submit" className="w-full mt-6" size="lg" disabled={isLoading}>
-                {isLoading ? 'Adding...' : 'Add Client'}
+              <Button
+                type="submit"
+                className="w-full mt-6"
+                size="lg"
+                disabled={isLoading}
+              >
+                {isLoading ? "Adding..." : "Add Client"}
               </Button>
             </form>
           </CardContent>
@@ -177,4 +230,4 @@ const AddClient = () => {
   );
 };
 
-export default AddClient; 
+export default AddClient;
