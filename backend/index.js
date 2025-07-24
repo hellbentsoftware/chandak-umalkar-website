@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
-// import documentRoutes from './documentRoutes.js'; // Uncomment if you have document routes
+import documentRoutes from './documentRoutes.js'; // Uncomment if you have document routes
 
 dotenv.config();
 
@@ -35,7 +35,12 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-app.use(cors());
+// Allow requests from your frontend origin
+app.use(cors({
+  origin: 'http://localhost:8080', // or the port your frontend runs on
+  credentials: true
+}));
+
 app.use(bodyParser.json());
 
 // Serve static files from the React app
@@ -74,7 +79,7 @@ app.use((req, res, next) => {
 });
 
 // Document routes (uncomment if you have documentRoutes.js)
-// app.use('/api/documents', authenticateToken, documentRoutes);
+app.use('/api/documents', authenticateToken, documentRoutes);
 
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
@@ -223,7 +228,7 @@ app.post('/api/admin/users', async (req, res) => {
     const mailOptions = {
       from: 'testhellbent@gmail.com',
       to: email,
-      subject: 'Welcome to Tax Consultancy Portal',
+      subject: 'Welcome to Chandak Umalkar Associates',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px #e0e0e0;">
           <div style="background: linear-gradient(90deg, #4f8cff, #6a82fb); color: #fff; padding: 24px 32px;">
@@ -248,7 +253,7 @@ app.post('/api/admin/users', async (req, res) => {
             <div style="text-align: center; margin-bottom: 16px;">
               <a href="http://your-login-url.com" style="background: #4f8cff; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1rem;">Login Now</a>
             </div>
-            <p style="margin-top: 32px; color: #555;">Best regards,<br/>Tax Consultancy Team</p>
+            <p style="margin-top: 32px; color: #555;">Best regards,<br/>Chandak Umalkar Associates</p>
           </div>
         </div>
       `
@@ -274,6 +279,86 @@ app.post('/api/admin/users', async (req, res) => {
 // Logout route (client-side token removal)
 app.post('/api/logout', authenticateToken, (req, res) => {
   res.json({ message: 'Logged out successfully' });
+});
+
+// Admin statistics endpoint
+app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    // Total users
+    const [userRows] = await db.execute('SELECT COUNT(*) as total FROM user');
+    const totalUsers = userRows[0]?.total || 0;
+
+    // Total documents uploaded
+    const [docRows] = await db.execute('SELECT COUNT(*) as total FROM document');
+    const documentsUploaded = docRows[0]?.total || 0;
+
+    // New uploads this month
+    const [monthRows] = await db.execute(`SELECT COUNT(*) as total FROM document WHERE YEAR(uploaded_at) = YEAR(CURDATE()) AND MONTH(uploaded_at) = MONTH(CURDATE())`);
+    const newUploadsThisMonth = monthRows[0]?.total || 0;
+
+    res.json({
+      totalUsers,
+      documentsUploaded,
+      newUploadsThisMonth
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching stats', error: err.message });
+  }
+});
+
+// Admin-only: Get all documents
+app.get('/api/admin/documents', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      `SELECT 
+        d.id,
+        d.filename as fileName,
+        d.document_type as fileType,
+        d.description,
+        d.file_size,
+        d.mime_type,
+        d.uploaded_at as uploadDate,
+        d.file_path as fileUrl,
+        d.user_id as userId,
+        CONCAT(u.first_name, ' ', u.last_name) as userName,
+        u.email_id as userEmail,
+        YEAR(d.uploaded_at) as year
+      FROM document d
+      JOIN user u ON d.user_id = u.id
+      ORDER BY d.uploaded_at DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching documents', error: err.message });
+  }
+});
+
+// User statistics endpoint
+app.get('/api/user/stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Total documents uploaded by this user
+    const [docRows] = await db.execute(
+      'SELECT COUNT(*) as total FROM document WHERE user_id = ?',
+      [userId]
+    );
+    const documentsUploaded = docRows[0]?.total || 0;
+
+    // New uploads this month by this user
+    const [monthRows] = await db.execute(
+      `SELECT COUNT(*) as total FROM document WHERE user_id = ? AND YEAR(uploaded_at) = YEAR(CURDATE()) AND MONTH(uploaded_at) = MONTH(CURDATE())`,
+      [userId]
+    );
+    const newUploadsThisMonth = monthRows[0]?.total || 0;
+
+    res.json({
+      documentsUploaded,
+      newUploadsThisMonth
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching stats', error: err.message });
+  }
 });
 
 app.listen(port, () => {

@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -22,10 +23,14 @@ const Header = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">TC</span>
+              <span className="text-white font-bold text-sm">CU</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Tax Consultant Portal</h1>
+              <h1 className="text-xl font-bold text-foreground">
+                <Link to="/" className="hover:underline focus:outline-none">
+                  Chandak Umalkar Associates
+                </Link>
+              </h1>
               <p className="text-sm text-muted-foreground">
                 {user?.role === 'admin' ? 'Admin Dashboard' : 'User Dashboard'}
               </p>
@@ -34,12 +39,6 @@ const Header = () => {
         </div>
         
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="relative">
-            <Bell className="h-4 w-4" />
-            <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">
-              3
-            </Badge>
-          </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -56,18 +55,7 @@ const Header = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="text-destructive">
+             <DropdownMenuItem onClick={logout} className="text-destructive">
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </DropdownMenuItem>

@@ -10,48 +10,49 @@ import UserDashboard from "./pages/UserDashboard";
 import Login from "./components/auth/Login";
 import NotFound from "./pages/NotFound";
 import AddClient from './pages/AddClient';
+import Footer from './components/layout/Footer';
+import Index from './pages/Index';
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { isAuthenticated, isAdmin } = useAuth();
 
-  if (!isAuthenticated) {
-    return <Login />;
-  }
-
   return (
-    <Routes>
-      <Route 
-        path="/" 
-        element={isAdmin ? <AdminDashboard /> : <UserDashboard />} 
-      />
-      <Route 
-        path="/admin" 
-        element={
-          <ProtectedRoute adminOnly>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <UserDashboard />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/add-client" 
-        element={
-          <ProtectedRoute adminOnly>
-            <AddClient />
-          </ProtectedRoute>
-        } 
-      />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute userOnly>
+                <UserDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/add-client" 
+            element={
+              <ProtectedRoute adminOnly>
+                <AddClient />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 };
 

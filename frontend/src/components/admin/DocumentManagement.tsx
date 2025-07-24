@@ -51,8 +51,9 @@ const DocumentManagement = () => {
   }, [documents, searchTerm, yearFilter, typeFilter]);
 
   const fetchDocuments = async () => {
+    console.log('Admin documents fetch token:', token); // Debug log
     try {
-      const response = await fetch('/api/admin/documents', {
+      const response = await fetch('http://localhost:5555/api/admin/documents', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -77,11 +78,11 @@ const DocumentManagement = () => {
       );
     }
 
-    if (yearFilter) {
+    if (yearFilter && yearFilter !== 'all-years') {
       filtered = filtered.filter(doc => doc.year === yearFilter);
     }
 
-    if (typeFilter) {
+    if (typeFilter && typeFilter !== 'all-types') {
       filtered = filtered.filter(doc => doc.fileType === typeFilter);
     }
 
@@ -142,7 +143,7 @@ const DocumentManagement = () => {
                 <SelectValue placeholder="Filter by year" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All years</SelectItem>
+                <SelectItem value="all-years">All years</SelectItem>
                 {getYears().map(year => (
                   <SelectItem key={year} value={year}>{year}</SelectItem>
                 ))}
@@ -153,7 +154,7 @@ const DocumentManagement = () => {
                 <SelectValue placeholder="Filter by document type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All types</SelectItem>
+                <SelectItem value="all-types">All types</SelectItem>
                 {documentTypes.map(type => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}

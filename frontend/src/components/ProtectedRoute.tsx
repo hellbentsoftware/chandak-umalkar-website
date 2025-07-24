@@ -1,31 +1,32 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Login from '@/components/auth/Login';
+import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   adminOnly?: boolean;
+  userOnly?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = false }) => {
-  const { isAuthenticated, isAdmin } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = false, userOnly = false }) => {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
+
+  if (loading) return null;
 
   if (!isAuthenticated) {
-    return <Login />;
+    return <Navigate to="/login" />;
   }
 
   if (adminOnly && !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground">You don't have permission to access this page.</p>
-        </div>
-      </div>
-    );
+    return <Navigate to="/dashboard" />;
   }
 
-  return <>{children}</>;
+  if (userOnly && isAdmin) {
+    return <Navigate to="/admin" />;
+  }
+
+  return children;
 };
 
 export default ProtectedRoute;

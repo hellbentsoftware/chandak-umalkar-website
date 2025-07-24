@@ -6,8 +6,37 @@ import MyDocuments from '@/components/user/MyDocuments';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Upload, Calendar, CheckCircle, AlertCircle, Clock, TrendingUp, Target, Award, Star } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const UserDashboard = () => {
+  const { token } = useAuth();
+  const [stats, setStats] = React.useState({
+    documentsUploaded: 0,
+    newUploadsThisMonth: 0,
+    loading: true,
+  });
+
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('http://localhost:5555/api/user/stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setStats({ ...data, loading: false });
+        } else {
+          throw new Error('Failed to fetch stats');
+        }
+      } catch (error) {
+        setStats(s => ({ ...s, loading: false }));
+      }
+    };
+    if (token) fetchStats();
+  }, [token]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/20">
       <Header />
@@ -22,7 +51,7 @@ const UserDashboard = () => {
         </div>
 
         {/* Enhanced Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-up">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-fade-up">
           <Card className="stat-card group hover:scale-105 transition-transform duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Documents Uploaded</CardTitle>
@@ -31,62 +60,29 @@ const UserDashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground mb-1">12</div>
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.loading ? '...' : stats.documentsUploaded}</div>
               <p className="text-sm text-muted-foreground">
                 Across all years
               </p>
             </CardContent>
           </Card>
-          
           <Card className="stat-card group hover:scale-105 transition-transform duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Last Upload</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">This Month</CardTitle>
               <div className="p-2 bg-green-500/10 rounded-lg group-hover:bg-green-500/20 transition-colors">
                 <Upload className="h-5 w-5 text-green-600" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground mb-1">3 days</div>
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.loading ? '...' : stats.newUploadsThisMonth}</div>
               <p className="text-sm text-muted-foreground">
-                Form 16 - 2024
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="stat-card group hover:scale-105 transition-transform duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Current Year</CardTitle>
-              <div className="p-2 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors">
-                <Calendar className="h-5 w-5 text-purple-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground mb-1">2024</div>
-              <div className="flex items-center text-sm">
-                <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                <span className="text-green-600 font-medium">4 documents</span>
-                <span className="text-muted-foreground ml-1">uploaded</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="stat-card group hover:scale-105 transition-transform duration-300">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Completion</CardTitle>
-              <div className="p-2 bg-green-500/10 rounded-lg group-hover:bg-green-500/20 transition-colors">
-                <Award className="h-5 w-5 text-green-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600 mb-1">100%</div>
-              <p className="text-sm text-muted-foreground">
-                All required docs uploaded
+                New uploads this month
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Enhanced Document Status Overview */}
+        {/* Enhanced Document Status Overview
         <Card className="mb-8 card-enhanced animate-fade-up">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -144,7 +140,7 @@ const UserDashboard = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Enhanced Tabs */}
         <Tabs defaultValue="upload" className="space-y-6 animate-fade-up">
