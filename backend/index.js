@@ -37,8 +37,8 @@ const transporter = nodemailer.createTransport({
 
 // Allow requests from your frontend origin
 app.use(cors({
-  origin: 'http://localhost:8080', // or the port your frontend runs on
-  credentials: true
+  origin: true,
+  credentials: true,
 }));
 
 app.use(bodyParser.json());
