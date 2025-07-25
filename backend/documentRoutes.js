@@ -57,26 +57,28 @@ router.post('/upload', upload, async (req, res) => {
       return res.status(400).json({ message: 'Document type and year are required' });
     }
 
-    // Insert document record into database
+    // Insert document record into database with original_filename
     const [result] = await req.db.execute(
       `INSERT INTO document (
         user_id, 
-        filename, 
+        filename,
+        original_filename,
         file_path, 
         file_size, 
         mime_type, 
         document_type, 
         description,
         assessment_year
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         req.file.filename,
+        req.file.originalname,  // Store original filename in dedicated column
         req.file.path,
         req.file.size,
         req.file.mimetype,
         documentType,
-        'Description',
+        `Document for year ${year}`,
         year
       ]
     );
@@ -101,13 +103,15 @@ router.get('/my-documents', async (req, res) => {
     const [rows] = await req.db.execute(
       `SELECT 
         id,
-        filename as fileName,
+        filename,
+        original_filename,
         document_type as fileType,
         description,
         file_size,
         mime_type,
         uploaded_at as uploadDate,
-        file_path as fileUrl
+        file_path,
+        assessment_year
       FROM document 
       WHERE user_id = ? 
       ORDER BY uploaded_at DESC`,
@@ -117,9 +121,9 @@ router.get('/my-documents', async (req, res) => {
     // Transform the data to match frontend expectations
     const documents = rows.map(doc => ({
       id: doc.id,
-      fileName: doc.fileName,
+      fileName: doc.original_filename || doc.filename, // Use original_filename if available
       fileType: doc.fileType,
-      year: extractYearFromDescription(doc.description),
+      year: doc.assessment_year || new Date().getFullYear().toString(),
       uploadDate: doc.uploadDate,
       fileUrl: `/api/documents/download/${doc.id}`,
       fileSize: doc.file_size,
@@ -155,20 +159,60 @@ router.get('/download/:id', async (req, res) => {
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {
+      console.error('File not found at path:', filePath);
       return res.status(404).json({ message: 'File not found on server' });
     }
 
-    // Set headers for file download
-    res.setHeader('Content-Type', document.mime_type);
-    res.setHeader('Content-Disposition', `attachment; filename="${document.original_filename}"`);
+    // Get file stats
+    let fileStats;
+    try {
+      fileStats = fs.statSync(filePath);
+    } catch (error) {
+      console.error('Error reading file stats:', error);
+      return res.status(500).json({ message: 'Error accessing file' });
+    }
 
-    // Stream the file
+    // Use original filename for download
+    const downloadFileName = document.original_filename || document.filename;
+
+    // Set proper headers for file download
+    res.setHeader('Content-Type', document.mime_type || 'application/octet-stream');
+    res.setHeader('Content-Length', fileStats.size);
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadFileName}"`);
+    
+    // Additional headers to ensure proper download
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Create read stream
     const fileStream = fs.createReadStream(filePath);
+    
+    // Handle stream errors
+    fileStream.on('error', (error) => {
+      console.error('File stream error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'Error reading file' });
+      }
+    });
+
+    // Handle response events
+    res.on('close', () => {
+      fileStream.destroy();
+    });
+
+    res.on('finish', () => {
+      console.log('File download completed for:', downloadFileName);
+    });
+
+    // Pipe the file to response
     fileStream.pipe(res);
 
   } catch (error) {
     console.error('Download error:', error);
-    res.status(500).json({ message: 'Error downloading document', error: error.message });
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Error downloading document', error: error.message });
+    }
   }
 });
 
@@ -198,8 +242,14 @@ router.delete('/:id', async (req, res) => {
     );
 
     // Delete file from filesystem
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log('File deleted from filesystem:', filePath);
+      }
+    } catch (error) {
+      console.error('Error deleting file from filesystem:', error);
+      // Continue with success response as database deletion was successful
     }
 
     res.json({ message: 'Document deleted successfully' });
@@ -210,10 +260,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Helper function to extract year from description
-function extractYearFromDescription(description) {
-  const yearMatch = description.match(/year (\d{4})/);
-  return yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
-}
-
-export default router; 
+export default router;
