@@ -6,9 +6,10 @@ import bodyParser from 'body-parser';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import path from 'path';
+import fs from 'fs'; // Add this import
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
-import documentRoutes from './documentRoutes.js'; // Uncomment if you have document routes
+import documentRoutes from './documentRoutes.js';
 
 dotenv.config();
 
@@ -78,7 +79,129 @@ app.use((req, res, next) => {
   next();
 });
 
-// Document routes (uncomment if you have documentRoutes.js)
+// Admin routes first - PUT ADMIN ROUTES BEFORE DOCUMENT ROUTES
+// Admin download route
+app.get('/api/admin/documents/download/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const documentId = req.params.id;
+
+    // For admin, don't check user ownership - they can download any document
+    const [rows] = await db.execute(
+      'SELECT * FROM document WHERE id = ?',
+      [documentId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    const document = rows[0];
+    const filePath = document.file_path;
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found at path:', filePath);
+      return res.status(404).json({ message: 'File not found on server' });
+    }
+
+    // Get file stats
+    let fileStats;
+    try {
+      fileStats = fs.statSync(filePath);
+    } catch (error) {
+      console.error('Error reading file stats:', error);
+      return res.status(500).json({ message: 'Error accessing file' });
+    }
+
+    // Use original filename for download
+    const downloadFileName = document.original_filename || document.filename;
+
+    // Set proper headers for file download
+    res.setHeader('Content-Type', document.mime_type || 'application/octet-stream');
+    res.setHeader('Content-Length', fileStats.size);
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadFileName}"`);
+
+    // Additional headers to ensure proper download
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Create read stream
+    const fileStream = fs.createReadStream(filePath);
+
+    // Handle stream errors
+    fileStream.on('error', (error) => {
+      console.error('File stream error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'Error reading file' });
+      }
+    });
+
+    // Handle response events
+    res.on('close', () => {
+      fileStream.destroy();
+    });
+
+    res.on('finish', () => {
+      console.log('File download completed for:', downloadFileName);
+    });
+
+    // Pipe the file to response
+    fileStream.pipe(res);
+
+  } catch (error) {
+    console.error('Admin download error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Error downloading document', error: error.message });
+    }
+  }
+});
+
+// Admin documents list
+app.get('/api/admin/documents', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      `SELECT 
+        d.id,
+        d.filename,
+        d.original_filename,
+        d.document_type as fileType,
+        d.description,
+        d.file_size,
+        d.mime_type,
+        d.uploaded_at as uploadDate,
+        d.assessment_year,
+        d.user_id as userId,
+        CONCAT(u.first_name, ' ', u.last_name) as userName,
+        u.email_id as userEmail
+      FROM document d
+      JOIN user u ON d.user_id = u.id
+      ORDER BY d.uploaded_at DESC`
+    );
+
+    // Transform the data to include proper download URLs
+    const documents = rows.map(doc => ({
+      id: doc.id,
+      fileName: doc.original_filename || doc.filename,
+      fileType: doc.fileType,
+      description: doc.description,
+      file_size: doc.file_size,
+      mime_type: doc.mime_type,
+      uploadDate: doc.uploadDate,
+      fileUrl: `/api/admin/documents/download/${doc.id}`, // Proper download URL
+      userId: doc.userId,
+      userName: doc.userName,
+      userEmail: doc.userEmail,
+      year: doc.assessment_year || new Date(doc.uploadDate).getFullYear()
+    }));
+
+    res.json(documents);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching documents', error: err.message });
+  }
+});
+
+// Document routes (user routes) - PUT AFTER ADMIN ROUTES
 app.use('/api/documents', authenticateToken, documentRoutes);
 
 app.post('/api/login', async (req, res) => {
@@ -303,33 +426,6 @@ app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) =>
     });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching stats', error: err.message });
-  }
-});
-
-// Admin-only: Get all documents
-app.get('/api/admin/documents', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const [rows] = await db.execute(
-      `SELECT 
-        d.id,
-        d.filename as fileName,
-        d.document_type as fileType,
-        d.description,
-        d.file_size,
-        d.mime_type,
-        d.uploaded_at as uploadDate,
-        d.file_path as fileUrl,
-        d.user_id as userId,
-        CONCAT(u.first_name, ' ', u.last_name) as userName,
-        u.email_id as userEmail,
-        YEAR(d.uploaded_at) as year
-      FROM document d
-      JOIN user u ON d.user_id = u.id
-      ORDER BY d.uploaded_at DESC`
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching documents', error: err.message });
   }
 });
 

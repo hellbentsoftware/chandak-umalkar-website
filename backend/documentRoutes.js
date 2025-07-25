@@ -138,7 +138,7 @@ router.get('/my-documents', async (req, res) => {
   }
 });
 
-// Download document
+// Download document (for regular users)
 router.get('/download/:id', async (req, res) => {
   try {
     const documentId = req.params.id;
