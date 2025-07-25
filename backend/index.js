@@ -30,8 +30,8 @@ const db = await mysql.createPool({
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'testhellbent@gmail.com',
-    pass: 'utfxojoxwsthzhve'
+    user: 'chandakumalkarassociates@gmail.com',
+    pass: 'bdqzaszjmpdactsq'
   }
 });
 
@@ -226,7 +226,7 @@ app.post('/api/admin/users', async (req, res) => {
     );
     // Use improved HTML email template
     const mailOptions = {
-      from: 'testhellbent@gmail.com',
+      from: 'chandakumalkarassociates@gmail.com',
       to: email,
       subject: 'Welcome to Chandak Umalkar Associates',
       html: `
