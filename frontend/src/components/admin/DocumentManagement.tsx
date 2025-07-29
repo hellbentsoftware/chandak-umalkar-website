@@ -1,9 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -11,14 +23,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useAuth } from '@/context/AuthContext';
-import { FileText, Download, Filter, Search } from 'lucide-react';
+} from "@/components/ui/table";
+import { useAuth } from "@/context/AuthContext";
+import { FileText, Download, Filter, Search } from "lucide-react";
 
 interface Document {
   id: string;
   fileName: string;
-  fileType: 'aadhar' | 'pan' | 'form16' | 'other';
+  fileType: "aadhar" | "pan" | "form16" | "other";
   year: string;
   uploadDate: string;
   userId: string;
@@ -31,16 +43,16 @@ import API_BASE_URL from "../../config";
 const DocumentManagement = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const { token } = useAuth();
 
   const documentTypes = [
-    { value: 'aadhar', label: 'Aadhar Card' },
-    { value: 'pan', label: 'PAN Card' },
-    { value: 'form16', label: 'Form 16' },
-    { value: 'other', label: 'Other' },
+    { value: "aadhar", label: "Aadhar Card" },
+    { value: "pan", label: "PAN Card" },
+    { value: "form16", label: "Form 16" },
+    { value: "other", label: "Other" },
   ];
 
   useEffect(() => {
@@ -52,19 +64,21 @@ const DocumentManagement = () => {
   }, [documents, searchTerm, yearFilter, typeFilter]);
 
   const fetchDocuments = async () => {
-    console.log('Admin documents fetch token:', token); // Debug log
+    console.log("Admin documents fetch token:", token); // Debug log
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/documents`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       if (response.ok) {
         const data = await response.json();
         setDocuments(data);
+      } else {
+        console.error('Failed to fetch documents:', response.status);
       }
     } catch (error) {
-      console.error('Error fetching documents:', error);
+      console.error("Error fetching documents:", error);
     }
   };
 
@@ -72,31 +86,66 @@ const DocumentManagement = () => {
     let filtered = documents;
 
     if (searchTerm) {
-      filtered = filtered.filter(doc => 
-        doc.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.fileName.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (doc) =>
+          doc.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          doc.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          doc.fileName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    if (yearFilter && yearFilter !== 'all-years') {
-      filtered = filtered.filter(doc => doc.year === yearFilter);
+    if (yearFilter && yearFilter !== "all-years") {
+      filtered = filtered.filter((doc) => doc.year === yearFilter);
     }
 
-    if (typeFilter && typeFilter !== 'all-types') {
-      filtered = filtered.filter(doc => doc.fileType === typeFilter);
+    if (typeFilter && typeFilter !== "all-types") {
+      filtered = filtered.filter((doc) => doc.fileType === typeFilter);
     }
 
     setFilteredDocuments(filtered);
   };
 
-  const handleDownload = (fileUrl: string, fileName: string) => {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (documentId: string, fileName: string) => {
+    try {
+      console.log('Attempting to download:', documentId, fileName);
+      
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/documents/download/${documentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log('Download response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Download failed:', response.status, errorText);
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('Download completed successfully');
+    } catch (error) {
+      console.error("Download error:", error);
+      alert(`Failed to download file: ${error.message}`);
+    }
   };
 
   const getYears = () => {
@@ -109,7 +158,7 @@ const DocumentManagement = () => {
   };
 
   const getDocumentTypeLabel = (type: string) => {
-    const docType = documentTypes.find(t => t.value === type);
+    const docType = documentTypes.find((t) => t.value === type);
     return docType ? docType.label : type;
   };
 
@@ -117,7 +166,9 @@ const DocumentManagement = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Document Management</h2>
-        <p className="text-muted-foreground">View and manage all uploaded documents</p>
+        <p className="text-muted-foreground">
+          View and manage all uploaded documents
+        </p>
       </div>
 
       <Card>
@@ -126,7 +177,9 @@ const DocumentManagement = () => {
             <Filter className="h-5 w-5" />
             Filters
           </CardTitle>
-          <CardDescription>Filter documents by user, year, or document type</CardDescription>
+          <CardDescription>
+            Filter documents by user, year, or document type
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -145,8 +198,10 @@ const DocumentManagement = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-years">All years</SelectItem>
-                {getYears().map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                {getYears().map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -156,7 +211,7 @@ const DocumentManagement = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-types">All types</SelectItem>
-                {documentTypes.map(type => (
+                {documentTypes.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>
@@ -195,7 +250,9 @@ const DocumentManagement = () => {
                   <TableCell>
                     <div>
                       <div className="font-medium">{document.userName}</div>
-                      <div className="text-sm text-muted-foreground">{document.userEmail}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {document.userEmail}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -203,7 +260,9 @@ const DocumentManagement = () => {
                       {getDocumentTypeLabel(document.fileType)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-medium">{document.fileName}</TableCell>
+                  <TableCell className="font-medium">
+                    {document.fileName}
+                  </TableCell>
                   <TableCell>{document.year}</TableCell>
                   <TableCell>
                     {new Date(document.uploadDate).toLocaleDateString()}
@@ -212,7 +271,9 @@ const DocumentManagement = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDownload(document.fileUrl, document.fileName)}
+                      onClick={() =>
+                        handleDownload(document.id, document.fileName)
+                      }
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download
