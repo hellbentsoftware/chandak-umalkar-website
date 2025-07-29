@@ -152,7 +152,7 @@ app.get('/api/me', authenticateToken, async (req, res) => {
 app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const [rows] = await db.execute(
-      'SELECT id, first_name, last_name, email_id, role, client_code, phone_number FROM user'
+      "SELECT id, first_name, last_name, email_id, role, client_code, phone_number FROM user WHERE role = 'client'"
     );
     const users = rows.map(user => ({
       id: user.id,

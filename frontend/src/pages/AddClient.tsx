@@ -16,7 +16,6 @@ const AddClient = () => {
     customerCode: "",
     aadharNumber: "",
     panNumber: "",
-    role: "client",
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +34,6 @@ const AddClient = () => {
       newErrors.mobileNumber = "Phone number is required";
     if (!newUser.customerCode)
       newErrors.customerCode = "Client code is required";
-    if (!newUser.role) newErrors.role = "Role is required";
     if (!newUser.password) newErrors.password = "Password is required";
     else if (newUser.password.length < 8)
       newErrors.password = "Password must be at least 8 characters";
@@ -54,7 +52,7 @@ const AddClient = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify({ ...newUser, role: "client" }),
       });
       if (response.ok) {
         navigate("/admin"); // Redirect to admin dashboard or user management
@@ -84,7 +82,7 @@ const AddClient = () => {
             <form onSubmit={handleAddUser} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">First Name*</Label>
                   <Input
                     id="firstName"
                     value={newUser.firstName}
@@ -100,7 +98,7 @@ const AddClient = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">Last Name*</Label>
                   <Input
                     id="lastName"
                     value={newUser.lastName}
@@ -116,7 +114,7 @@ const AddClient = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email*</Label>
                   <Input
                     id="email"
                     type="email"
@@ -131,7 +129,7 @@ const AddClient = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="mobileNumber">Phone Number</Label>
+                  <Label htmlFor="mobileNumber">Phone Number*</Label>
                   <Input
                     id="mobileNumber"
                     value={newUser.mobileNumber}
@@ -147,7 +145,7 @@ const AddClient = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customerCode">Client Code</Label>
+                  <Label htmlFor="customerCode">Client Code*</Label>
                   <Input
                     id="customerCode"
                     value={newUser.customerCode}
@@ -182,22 +180,9 @@ const AddClient = () => {
                     }
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Input
-                    id="role"
-                    value={newUser.role}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, role: e.target.value })
-                    }
-                    required
-                  />
-                  {errors.role && (
-                    <p className="text-red-500 text-xs mt-1">{errors.role}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Password*</Label>
                   <Input
                     id="password"
                     type="password"

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Settings, Bell } from 'lucide-react';
+import { LogOut, User, Settings, Bell, LayoutDashboard } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,10 +12,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleDashboardClick = () => {
+    if (user?.role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
   return (
     <header className="bg-white border-b border-border px-6 py-4 shadow-sm">
@@ -55,7 +64,12 @@ const Header = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-             <DropdownMenuItem onClick={logout} className="text-destructive">
+              <DropdownMenuItem onClick={handleDashboardClick}>
+                <LayoutDashboard className="h-4 w-4 mr-2" />
+                Dashboard
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="text-destructive">
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </DropdownMenuItem>

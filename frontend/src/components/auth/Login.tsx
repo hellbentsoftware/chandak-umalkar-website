@@ -120,7 +120,6 @@ const Login = () => {
           </CardContent>
         </Card>
       </div>
-      <Footer />
     </div>
   );
 };
