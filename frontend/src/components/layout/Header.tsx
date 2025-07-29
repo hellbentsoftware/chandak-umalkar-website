@@ -36,9 +36,12 @@ const Header = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">
-                <Link to="/" className="hover:underline focus:outline-none">
+                <button 
+                  onClick={handleDashboardClick}
+                  className="hover:no-underline focus:outline-none cursor-pointer"
+                >
                   Chandak Umalkar Associates
-                </Link>
+                </button>
               </h1>
               <p className="text-sm text-muted-foreground">
                 {user?.role === 'admin' ? 'Admin Dashboard' : 'User Dashboard'}

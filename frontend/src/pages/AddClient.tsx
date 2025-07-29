@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,9 @@ import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/layout/Header";
 import API_BASE_URL from "../config";
 const AddClient = () => {
+  const { userId } = useParams();
+  const isEditMode = !!userId;
+  
   const [newUser, setNewUser] = useState({
     firstName: "",
     lastName: "",
@@ -19,9 +22,48 @@ const AddClient = () => {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const { token } = useAuth();
   const navigate = useNavigate();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    if (isEditMode && userId) {
+      fetchUserData();
+    }
+  }, [isEditMode, userId]);
+
+  const fetchUserData = async () => {
+    setIsFetching(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setNewUser({
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          email: userData.email || "",
+          mobileNumber: userData.mobileNumber || "",
+          customerCode: userData.customerCode || "",
+          aadharNumber: userData.aadharNumber || "",
+          panNumber: userData.panNumber || "",
+          password: "", // Don't populate password for security
+        });
+      } else {
+        alert("Failed to fetch user data");
+        navigate("/admin");
+      }
+    } catch (error) {
+      alert("Failed to fetch user data");
+      navigate("/admin");
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
@@ -34,35 +76,49 @@ const AddClient = () => {
       newErrors.mobileNumber = "Phone number is required";
     if (!newUser.customerCode)
       newErrors.customerCode = "Client code is required";
-    if (!newUser.password) newErrors.password = "Password is required";
-    else if (newUser.password.length < 8)
+    // Only validate password for new users or if password is being changed
+    if (!isEditMode && !newUser.password) newErrors.password = "Password is required";
+    else if (newUser.password && newUser.password.length < 8)
       newErrors.password = "Password must be at least 8 characters";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAddUser = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setIsLoading(true);
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
-        method: "POST",
+      const url = isEditMode 
+        ? `${API_BASE_URL}/api/admin/users/${userId}`
+        : `${API_BASE_URL}/api/admin/users`;
+      
+      const method = isEditMode ? "PUT" : "POST";
+      
+      // For edit mode, only include password if it's being changed
+      const requestBody = isEditMode 
+        ? { ...newUser, role: "client", ...(newUser.password && { password: newUser.password }) }
+        : { ...newUser, role: "client" };
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...newUser, role: "client" }),
+        body: JSON.stringify(requestBody),
       });
+      
       if (response.ok) {
         navigate("/admin"); // Redirect to admin dashboard or user management
       } else if (response.status === 409) {
         alert("User already present");
       } else {
-        alert("Failed to add user");
+        alert(isEditMode ? "Failed to update user" : "Failed to add user");
       }
     } catch (error) {
-      alert("Failed to add user");
+      alert(isEditMode ? "Failed to update user" : "Failed to add user");
     } finally {
       setIsLoading(false);
     }
@@ -75,11 +131,11 @@ const AddClient = () => {
         <Card className="w-full max-w-2xl shadow-lg border border-gray-200">
           <CardHeader>
             <CardTitle className="text-3xl font-bold text-center">
-              Add Client
+              {isEditMode ? "Edit Client" : "Add Client"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleAddUser} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name*</Label>
@@ -182,7 +238,9 @@ const AddClient = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password*</Label>
+                  <Label htmlFor="password">
+                    {isEditMode ? "Password (leave blank to keep current)" : "Password*"}
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -190,7 +248,8 @@ const AddClient = () => {
                     onChange={(e) =>
                       setNewUser({ ...newUser, password: e.target.value })
                     }
-                    required
+                    required={!isEditMode}
+                    placeholder={isEditMode ? "Enter new password or leave blank" : ""}
                   />
                   {errors.password && (
                     <p className="text-red-500 text-xs mt-1">
@@ -203,9 +262,12 @@ const AddClient = () => {
                 type="submit"
                 className="w-full mt-6"
                 size="lg"
-                disabled={isLoading}
+                disabled={isLoading || isFetching}
               >
-                {isLoading ? "Adding..." : "Add Client"}
+                {isLoading 
+                  ? (isEditMode ? "Updating..." : "Adding...") 
+                  : (isEditMode ? "Update Client" : "Add Client")
+                }
               </Button>
             </form>
           </CardContent>
