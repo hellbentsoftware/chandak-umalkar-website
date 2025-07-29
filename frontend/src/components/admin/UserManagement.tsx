@@ -28,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config";
 interface User {
@@ -45,6 +45,7 @@ const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const { token } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -79,6 +80,12 @@ const UserManagement = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
     }
+  };
+
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    // You can navigate to an edit page or open a modal here
+    navigate(`/admin/edit-user/${user.id}`);
   };
 
   const handleAddUser = async (e: React.FormEvent) => {
@@ -157,6 +164,7 @@ const UserManagement = () => {
                 <TableHead>Mobile</TableHead>
                 <TableHead>Customer Code</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -174,6 +182,16 @@ const UserManagement = () => {
                     >
                       {user.role}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditUser(user)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
