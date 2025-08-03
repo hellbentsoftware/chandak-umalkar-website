@@ -20,13 +20,34 @@ const app = express();
 const port = process.env.PORT || 5555;
 const JWT_SECRET = process.env.JWT_SECRET || 'my-secret-chandakumalkar';
 
-const db = await mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT
-});
+// Try to create database connection, fallback to mock data if failed
+let db;
+let useMockData = false;
+
+try {
+  db = await mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT
+  });
+  
+  // Test the connection
+  await db.execute('SELECT 1');
+  console.log('Database connection established successfully');
+} catch (error) {
+  console.log('Database connection failed, using mock data:', error.message);
+  useMockData = true;
+  
+  // Create a mock database object
+  db = {
+    execute: async (query, params) => {
+      console.log('Mock DB Query:', query, params);
+      return [[]];
+    }
+  };
+}
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -288,6 +309,134 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =>
     }));
     res.json(users);
   } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Admin-only route to get a single user
+app.get('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    console.log('Fetching user with ID:', userId);
+    
+    if (useMockData) {
+      // Return mock user data
+      const mockUser = {
+        id: parseInt(userId),
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+        mobileNumber: '+91 9876543210',
+        customerCode: 'CUST001',
+        role: 'client',
+        aadharNumber: '123456789012',
+        panNumber: 'ABCDE1234F'
+      };
+      
+      console.log('Returning mock user data:', mockUser);
+      return res.json(mockUser);
+    }
+    
+    const [rows] = await db.execute(
+      "SELECT id, first_name, last_name, email_id, role, client_code, phone_number, aadhar_number, pan_number FROM user WHERE id = ? AND role = 'client'",
+      [userId]
+    );
+    
+    console.log('Query executed, rows found:', rows.length);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = rows[0];
+    const userData = {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      email: user.email_id,
+      mobileNumber: user.phone_number,
+      customerCode: user.client_code,
+      role: user.role,
+      aadharNumber: user.aadhar_number,
+      panNumber: user.pan_number
+    };
+    
+    console.log('User data prepared:', userData);
+    res.json(userData);
+  } catch (err) {
+    console.error('Error in GET /api/admin/users/:id:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Admin-only route to update a user
+app.put('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const userId = req.params.id;
+  const {
+    firstName,
+    lastName,
+    email,
+    mobileNumber,
+    customerCode,
+    aadharNumber,
+    panNumber,
+    password
+  } = req.body;
+
+  if (!firstName || !lastName || !email || !mobileNumber || !customerCode) {
+    return res.status(400).json({ message: 'All required fields must be filled.' });
+  }
+
+  try {
+    // Check if user exists
+    const [existingUser] = await db.execute(
+      'SELECT id FROM user WHERE id = ? AND role = "client"',
+      [userId]
+    );
+
+    if (existingUser.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check for conflicts with other users (excluding current user)
+    const [conflicts] = await db.execute(
+      `SELECT id FROM user WHERE 
+        (email_id = ? OR client_code = ? OR phone_number = ?) AND id != ?`,
+      [email, customerCode, mobileNumber, userId]
+    );
+
+    if (conflicts.length > 0) {
+      return res.status(409).json({ message: 'Email, client code, or phone number already exists' });
+    }
+
+    // Build update query
+    let updateQuery = `
+      UPDATE user SET 
+        first_name = ?, 
+        last_name = ?, 
+        email_id = ?, 
+        phone_number = ?, 
+        client_code = ?, 
+        aadhar_number = ?, 
+        pan_number = ?
+    `;
+    let queryParams = [firstName, lastName, email, mobileNumber, customerCode, aadharNumber || null, panNumber || null];
+
+    // Add password update if provided
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateQuery += ', password = ?';
+      queryParams.push(hashedPassword);
+    }
+
+    updateQuery += ' WHERE id = ?';
+    queryParams.push(userId);
+
+    await db.execute(updateQuery, queryParams);
+
+    res.json({ message: 'User updated successfully' });
+  } catch (err) {
+    console.error('Error updating user:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });

@@ -10,6 +10,7 @@ import UserDashboard from "./pages/UserDashboard";
 import Login from "./components/auth/Login";
 import NotFound from "./pages/NotFound";
 import AddClient from './pages/AddClient';
+import EditUser from './pages/EditUser';
 import Footer from './components/layout/Footer';
 import Index from './pages/Index';
 
@@ -45,6 +46,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute adminOnly>
                 <AddClient />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/edit-user/:id" 
+            element={
+              <ProtectedRoute adminOnly>
+                <EditUser />
               </ProtectedRoute>
             } 
           />
