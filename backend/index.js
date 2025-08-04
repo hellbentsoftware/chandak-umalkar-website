@@ -319,24 +319,6 @@ app.get('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, res
     const userId = req.params.id;
     console.log('Fetching user with ID:', userId);
     
-    if (useMockData) {
-      // Return mock user data
-      const mockUser = {
-        id: parseInt(userId),
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        mobileNumber: '+91 9876543210',
-        customerCode: 'CUST001',
-        role: 'client',
-        aadharNumber: '123456789012',
-        panNumber: 'ABCDE1234F'
-      };
-      
-      console.log('Returning mock user data:', mockUser);
-      return res.json(mockUser);
-    }
-    
     const [rows] = await db.execute(
       "SELECT id, first_name, last_name, email_id, role, client_code, phone_number, aadhar_number, pan_number FROM user WHERE id = ? AND role = 'client'",
       [userId]
